@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}登入{% endblock %}
+{% block content %}
+<form class="card" method="post">
+  <h1>登入</h1>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>用戶名
+    <input name="username" autocomplete="username" required autofocus>
+  </label>
+  <label>密碼
+    <input name="password" type="password" autocomplete="current-password" required>
+  </label>
+  <button>登入</button>
+  <p>還沒有帳號？<a href="{{ url_for('auth.register') }}">註冊</a></p>
+</form>
+{% endblock %}
