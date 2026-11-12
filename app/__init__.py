@@ -9,6 +9,7 @@ from flask_wtf.csrf import CSRFError, CSRFProtect
 from werkzeug.exceptions import RequestEntityTooLarge
 
 from .auth import bp as auth_bp
+from .location import bp as location_bp
 from .main import bp as main_bp
 from .models import db
 from .users import MAX_UPLOAD_MB
@@ -49,6 +50,7 @@ def create_app(test_config=None):
     db.init_app(app)
     csrf.init_app(app)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(location_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(restaurants_bp)
