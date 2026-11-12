@@ -19,9 +19,10 @@ body {
   box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 }
 
-h1, .card p { margin: 0; }
+h1, h2, .card p { margin: 0; }
 label { display: grid; gap: 4px; }
-input { padding: 8px; font: inherit; }
+input, textarea { padding: 8px; font: inherit; }
+textarea { resize: vertical; }
 a { color: #c2410c; }
 
 button {
@@ -34,7 +35,38 @@ button {
   cursor: pointer;
 }
 
-.logout { text-align: right; }
+.top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile { justify-items: center; text-align: center; }
+.muted { color: #78716c; }
+.bio { white-space: pre-line; overflow-wrap: anywhere; }
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fed7aa;
+  color: #9a3412;
+  font-size: 40px;
+}
+
+.settings {
+  display: grid;
+  gap: 16px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.settings .card { width: 100%; margin: 0; }
+.check { display: flex; align-items: center; gap: 8px; }
 
 .message {
   max-width: 360px;

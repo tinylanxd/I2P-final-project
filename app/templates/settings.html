@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}設定{% endblock %}
+{% block content %}
+<nav class="top">
+  <a href="{{ url_for('users.profile', user_id=g.user.id) }}">我的個人頁</a>
+</nav>
+<main class="settings">
+  <h1>設定</h1>
+
+  <form class="card" method="post" action="{{ url_for('users.update_profile') }}" enctype="multipart/form-data">
+    <h2>個人資料</h2>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if g.user.has_avatar %}
+      <img class="avatar" src="{{ url_for('users.avatar', user_id=g.user.id) }}" alt="目前的頭像">
+      <label class="check"><input name="remove_avatar" type="checkbox"> 移除頭像</label>
+    {% endif %}
+    <label>上傳頭像（JPG、PNG、WebP、GIF，最大 5 MB）
+      <input name="avatar" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+    </label>
+    <label>暱稱（選填）
+      <input name="nickname" maxlength="30" value="{{ form.nickname }}">
+    </label>
+    <label>自我介紹（選填）
+      <textarea name="bio" maxlength="200" rows="4">{{ form.bio }}</textarea>
+    </label>
+    <button>儲存個人資料</button>
+  </form>
+
+  <form class="card" method="post" action="{{ url_for('users.update_username') }}">
+    <h2>用戶名</h2>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>用戶名
+      <input name="username" maxlength="30" value="{{ form.username }}" autocomplete="username" required>
+    </label>
+    <button>儲存用戶名</button>
+  </form>
+
+  <form class="card" method="post" action="{{ url_for('users.update_password') }}">
+    <h2>密碼</h2>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>新密碼
+      <input name="password" type="password" autocomplete="new-password" required>
+    </label>
+    <label>再輸入一次新密碼
+      <input name="confirm_password" type="password" autocomplete="new-password" required>
+    </label>
+    <button>儲存密碼</button>
+  </form>
+</main>
+{% endblock %}

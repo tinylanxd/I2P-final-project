@@ -3,6 +3,7 @@ from functools import wraps
 from flask import (
     Blueprint,
     flash,
+    g,
     redirect,
     render_template,
     request,
@@ -19,23 +20,34 @@ bp = Blueprint("auth", __name__)
 MAX_USERNAME_LENGTH = 30
 
 
+@bp.before_app_request
+def load_logged_in_user():
+    user_id = session.get("user_id")
+    g.user = None if user_id is None else db.session.get(User, user_id)
+    if user_id is not None and g.user is None:
+        # The account no longer exists, so drop the stale login.
+        session.clear()
+
+
 def login_required(view):
     @wraps(view)
     def wrapped(**kwargs):
-        user_id = session.get("user_id")
-        if user_id is None or db.session.get(User, user_id) is None:
-            session.clear()
+        if g.user is None:
             return redirect(url_for("auth.login"))
         return view(**kwargs)
 
     return wrapped
 
 
-def validate_registration(username, password):
+def validate_username(username):
     if not username:
         return "請輸入用戶名"
     if len(username) > MAX_USERNAME_LENGTH:
         return f"用戶名不能超過 {MAX_USERNAME_LENGTH} 個字元"
+    return None
+
+
+def validate_password(password):
     if not password.strip():
         return "請輸入密碼"
     return None
@@ -46,7 +58,7 @@ def register():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
-        error = validate_registration(username, password)
+        error = validate_username(username) or validate_password(password)
 
         if error is None:
             user = User(

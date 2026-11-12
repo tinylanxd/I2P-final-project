@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ user.display_name }}{% endblock %}
+{% block content %}
+<nav class="top">
+  {% if g.user %}
+    <a href="{{ url_for('main.home') }}">回主頁</a>
+  {% else %}
+    <a href="{{ url_for('auth.login') }}">登入</a>
+  {% endif %}
+</nav>
+<section class="card profile">
+  {% if user.has_avatar %}
+    <img class="avatar" src="{{ url_for('users.avatar', user_id=user.id) }}" alt="頭像">
+  {% else %}
+    <span class="avatar" aria-hidden="true">{{ user.display_name[0] }}</span>
+  {% endif %}
+  <h1>{{ user.display_name }}</h1>
+  {% if user.nickname %}<p class="muted">用戶名：{{ user.username }}</p>{% endif %}
+  {% if user.bio %}<p class="bio">{{ user.bio }}</p>{% endif %}
+  {% if g.user and g.user.id == user.id %}
+    <a href="{{ url_for('users.settings') }}">編輯個人資料</a>
+  {% endif %}
+</section>
+{% endblock %}
