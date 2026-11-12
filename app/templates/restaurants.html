@@ -1,11 +1,14 @@
 {% extends "base.html" %}
-{% from "_macros.html" import rating, map_link, actions %}
+{% from "_macros.html" import rating, map_link, actions, price_tag %}
 {% block title %}{{ {'mine': '我的餐廳', 'public': '公用餐廳', 'favorites': '我的收藏'}[scope] }}{% endblock %}
 {% block content %}
 <div class="page">
   <div class="toolbar">
     <a href="{{ url_for('main.home') }}">← 主頁</a>
-    <a class="button" href="{{ url_for('restaurants.new') }}">＋ 新增餐廳</a>
+    <span class="toolbar-actions">
+      <a class="button secondary" href="{{ url_for('restaurants.pick', scope=scope) }}">🎲 隨機抽一間</a>
+      <a class="button" href="{{ url_for('restaurants.new') }}">＋ 新增餐廳</a>
+    </span>
   </div>
 
   <nav class="tabs">
@@ -28,6 +31,7 @@
     <div class="item-head">
       <h2><a href="{{ url_for('restaurants.detail', restaurant_id=r.id) }}">{{ r.name }}</a></h2>
       {% if r.category %}<span class="tag">{{ r.category }}</span>{% endif %}
+      {{ price_tag(r.price_level) }}
       {% if r.user_id == me and r.is_public %}<span class="badge">已公開</span>{% endif %}
     </div>
     <p>{{ rating(stats.get(r.id)) }}</p>

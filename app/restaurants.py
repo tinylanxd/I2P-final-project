@@ -15,17 +15,30 @@ from flask import (
 )
 
 from .auth import login_required
-from .models import Favorite, MenuItem, Restaurant, Review, db
+from .location import get_user_location
+from .models import PRICE_LEVELS, Favorite, MenuItem, Restaurant, Review, db
+from .picker import DISTANCE_OPTIONS, choose, format_distance, within_distance
 
 bp = Blueprint("restaurants", __name__, url_prefix="/restaurants")
 
 LIMITS = {"name": 50, "address": 200, "category": 30, "note": 200}
 LABELS = {"name": "餐廳名稱", "address": "地址", "category": "分類", "note": "備註"}
 SCOPES = ("mine", "public", "favorites")
+SCOPE_LABELS = {"mine": "我的餐廳", "public": "公用餐廳", "favorites": "我的收藏"}
+
+# Form and query-string values ("1", "500", ...) mapped to their typed keys.
+PRICE_CHOICES = {str(level): level for level in PRICE_LEVELS}
+DISTANCE_CHOICES = {str(metres): metres for metres in DISTANCE_OPTIONS}
 
 MAX_ITEMS = 30
 MAX_ITEM_NAME = 50
 MAX_COMMENT = 200
+
+
+@bp.record_once
+def share_price_levels(state):
+    # A global, not a context variable, so imported macros can use it too.
+    state.app.jinja_env.globals["PRICE_LEVELS"] = PRICE_LEVELS
 
 
 # ---------------------------------------------------------------- helpers
@@ -39,6 +52,7 @@ def blank_form():
     form = {key: "" for key in LIMITS}
     form.update(
         is_public=False,
+        price_level="",
         latitude="",
         longitude="",
         items=[],
@@ -68,6 +82,11 @@ def validate(form, parsed):
             return f"{LABELS[key]}不能超過 {limit} 個字元"
     if len(form["review_comment"]) > MAX_COMMENT:
         return f"評價內容不能超過 {MAX_COMMENT} 個字元"
+
+    # Price level: optional, "" means "not sure".
+    if form["price_level"] and form["price_level"] not in PRICE_CHOICES:
+        return "價位等級不正確"
+    parsed["price_level"] = PRICE_CHOICES.get(form["price_level"])
 
     # Location: both coordinates or neither.
     if form["latitude"] or form["longitude"]:
@@ -114,6 +133,7 @@ def read_form():
     """Read the restaurant form. Returns (form for re-display, parsed values, error)."""
     form = {key: request.form.get(key, "").strip() for key in LIMITS}
     form["is_public"] = bool(request.form.get("is_public"))
+    form["price_level"] = request.form.get("price_level", "").strip()
     form["latitude"] = request.form.get("latitude", "").strip()
     form["longitude"] = request.form.get("longitude", "").strip()
     form["stars"] = request.form.get("stars", "").strip()
@@ -134,6 +154,9 @@ def read_form():
 def form_from_restaurant(restaurant, me):
     form = {key: getattr(restaurant, key) for key in LIMITS}
     form["is_public"] = restaurant.is_public
+    form["price_level"] = (
+        "" if restaurant.price_level is None else str(restaurant.price_level)
+    )
     form["latitude"] = "" if restaurant.latitude is None else str(restaurant.latitude)
     form["longitude"] = "" if restaurant.longitude is None else str(restaurant.longitude)
     form["items"] = [
@@ -150,6 +173,7 @@ def apply_form(restaurant, form, parsed):
     for key in LIMITS:
         setattr(restaurant, key, form[key])
     restaurant.is_public = form["is_public"]
+    restaurant.price_level = parsed["price_level"]
     restaurant.latitude = parsed["latitude"]
     restaurant.longitude = parsed["longitude"]
     # Replacing the list also deletes the old rows (delete-orphan).
@@ -222,6 +246,66 @@ def saved_source_ids(me):
     )
 
 
+def scope_query(scope, me):
+    """The select statement for one of the list tabs."""
+    if scope == "public":
+        return db.select(Restaurant).where(Restaurant.is_public.is_(True))
+    if scope == "favorites":
+        return (
+            db.select(Restaurant)
+            .join(Favorite, Favorite.restaurant_id == Restaurant.id)
+            .where(
+                Favorite.user_id == me,
+                # A favorite someone made private again simply disappears.
+                sa.or_(Restaurant.user_id == me, Restaurant.is_public.is_(True)),
+            )
+        )
+    return db.select(Restaurant).where(Restaurant.user_id == me)
+
+
+def parse_pick_filters(distance, prices):
+    """Returns (max metres or None, set of price levels, error or None)."""
+    if distance and distance not in DISTANCE_CHOICES:
+        return None, set(), "距離選項不正確"
+    if any(price not in PRICE_CHOICES for price in prices):
+        return None, set(), "價位選項不正確"
+    return DISTANCE_CHOICES.get(distance), {PRICE_CHOICES[p] for p in prices}, None
+
+
+def draw(scope, me, max_m, levels, origin, last_id):
+    """Pick a random restaurant. Returns (result dict or None, candidate count).
+
+    Missing data never rules a restaurant out: one without coordinates or
+    without a price level stays a candidate, and the result says so.
+    """
+    stmt = scope_query(scope, me)
+    if levels:
+        stmt = stmt.where(
+            sa.or_(
+                Restaurant.price_level.in_(levels),
+                Restaurant.price_level.is_(None),
+            )
+        )
+    rows = db.session.scalars(stmt).all()
+
+    if max_m is None:
+        candidates = [(restaurant, None) for restaurant in rows]
+    else:
+        candidates = within_distance(rows, origin, max_m)
+
+    picked = choose(candidates, last_id)
+    if picked is None:
+        return None, 0
+    restaurant, metres = picked
+    result = {
+        "restaurant": restaurant,
+        "distance": None if metres is None else format_distance(metres),
+        "unknown_distance": max_m is not None and metres is None,
+        "unknown_price": bool(levels) and restaurant.price_level is None,
+    }
+    return result, len(candidates)
+
+
 def back_to_list(restaurant_id=None):
     """Go back to where the action was triggered (detail page or a list tab)."""
     if restaurant_id is not None and request.form.get("return_to") == "detail":
@@ -239,21 +323,7 @@ def index():
     me = session["user_id"]
     scope = get_scope(request.args.get("scope"))
     q = request.args.get("q", "").strip()
-
-    if scope == "public":
-        stmt = db.select(Restaurant).where(Restaurant.is_public.is_(True))
-    elif scope == "favorites":
-        stmt = (
-            db.select(Restaurant)
-            .join(Favorite, Favorite.restaurant_id == Restaurant.id)
-            .where(
-                Favorite.user_id == me,
-                # A favorite someone made private again simply disappears.
-                sa.or_(Restaurant.user_id == me, Restaurant.is_public.is_(True)),
-            )
-        )
-    else:
-        stmt = db.select(Restaurant).where(Restaurant.user_id == me)
+    stmt = scope_query(scope, me)
 
     if q:
         pattern = f"%{q}%"
@@ -277,6 +347,45 @@ def index():
         stats=rating_stats([r.id for r in items]),
         fav_ids=favorite_ids(me),
         saved_ids=saved_source_ids(me),
+    )
+
+
+@bp.route("/pick")
+@login_required
+def pick():
+    """Random pick page. Drawing changes nothing, so it is a plain GET form."""
+    me = session["user_id"]
+    scope = get_scope(request.args.get("scope"))
+    distance = request.args.get("distance", "")
+    prices = request.args.getlist("price")
+    drawn = request.args.get("draw") == "1"
+    result, count, error = None, 0, None
+
+    if drawn:
+        max_m, levels, error = parse_pick_filters(distance, prices)
+        origin = None
+        if error is None and max_m is not None:
+            location = get_user_location()
+            if location is None:
+                error = "無法取得你的位置：請允許瀏覽器定位，或把距離改成「不限」"
+            else:
+                origin = (location.latitude, location.longitude)
+        if error is None:
+            last_id = request.args.get("last", type=int)
+            result, count = draw(scope, me, max_m, levels, origin, last_id)
+
+    return render_template(
+        "restaurant_pick.html",
+        scope=scope,
+        distance=distance,
+        prices=prices,
+        drawn=drawn,
+        error=error,
+        result=result,
+        count=count,
+        stats=rating_stats([result["restaurant"].id]) if result else {},
+        scope_labels=SCOPE_LABELS,
+        distance_options=DISTANCE_OPTIONS,
     )
 
 
@@ -376,6 +485,7 @@ def save_copy(restaurant_id):
                 category=source.category,
                 note=source.note,
                 is_public=False,
+                price_level=source.price_level,
                 latitude=source.latitude,
                 longitude=source.longitude,
                 source_id=source.id,

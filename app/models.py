@@ -3,6 +3,9 @@ from sqlalchemy.orm import deferred
 
 db = SQLAlchemy()
 
+# Self-reported price per person; the key is stored in Restaurant.price_level.
+PRICE_LEVELS = {1: "每人 150 元以下", 2: "每人 150–300 元", 3: "每人 300 元以上"}
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -36,6 +39,8 @@ class Restaurant(db.Model):
     category = db.Column(db.String(30), nullable=False, default="")
     note = db.Column(db.String(200), nullable=False, default="")
     is_public = db.Column(db.Boolean, nullable=False, default=False)
+    # A key of PRICE_LEVELS, or None when the user did not choose one.
+    price_level = db.Column(db.Integer)
     # Optional coordinates, filled from the browser's "use my location" button.
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)

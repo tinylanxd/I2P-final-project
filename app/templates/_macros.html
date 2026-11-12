@@ -13,6 +13,12 @@
 {%- endif -%}
 {%- endmacro %}
 
+{% macro price_tag(level) -%}
+{%- if level -%}
+<span class="tag" title="{{ PRICE_LEVELS[level] }}">{{ '$' * level }}</span>
+{%- endif -%}
+{%- endmacro %}
+
 {% macro map_link(r) -%}
 {%- if r.latitude is not none and r.longitude is not none -%}
 <a href="https://www.google.com/maps?q={{ r.latitude }},{{ r.longitude }}" target="_blank" rel="noopener noreferrer">🗺 在地圖開啟</a>

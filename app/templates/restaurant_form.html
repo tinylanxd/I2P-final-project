@@ -20,6 +20,14 @@
   <label>分類（例如：拉麵、咖啡）
     <input name="category" maxlength="30" value="{{ form.category }}">
   </label>
+  <label>價位（每人）
+    <select name="price_level">
+      <option value="">不確定</option>
+      {% for level, label in PRICE_LEVELS.items() %}
+      <option value="{{ level }}" {% if form.price_level == level|string %}selected{% endif %}>{{ '$' * level }}　{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
 
   <fieldset>
     <legend>菜單（餐點與價格，可新增多項）</legend>
