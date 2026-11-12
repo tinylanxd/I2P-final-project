@@ -1,0 +1,66 @@
+{# Shared pieces used by the list page and the detail page. #}
+
+{% macro stars(value) -%}
+{%- set n = (value + 0.5)|int -%}
+<span class="stars" aria-label="{{ n }} 顆星">{{ '★' * n }}{{ '☆' * (5 - n) }}</span>
+{%- endmacro %}
+
+{% macro rating(stat) -%}
+{%- if stat -%}
+{{ stars(stat[0]) }} <span class="meta">{{ '%.1f'|format(stat[0]) }}（{{ stat[1] }} 則評價）</span>
+{%- else -%}
+<span class="meta">尚無評價</span>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro map_link(r) -%}
+{%- if r.latitude is not none and r.longitude is not none -%}
+<a href="https://www.google.com/maps?q={{ r.latitude }},{{ r.longitude }}" target="_blank" rel="noopener noreferrer">🗺 在地圖開啟</a>
+{%- elif r.address -%}
+<a href="https://www.google.com/maps/search/?api=1&amp;query={{ r.address|urlencode }}" target="_blank" rel="noopener noreferrer">🗺 在地圖開啟</a>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro hidden(scope, return_to) -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="scope" value="{{ scope }}">
+{%- if return_to %}
+<input type="hidden" name="return_to" value="{{ return_to }}">
+{%- endif %}
+{%- endmacro %}
+
+{% macro actions(r, me, scope, fav_ids, saved_ids, return_to='') -%}
+<div class="actions">
+  {% if r.user_id == me %}
+    <a class="button secondary" href="{{ url_for('restaurants.edit', restaurant_id=r.id) }}">編輯</a>
+    <form method="post" action="{{ url_for('restaurants.toggle_share', restaurant_id=r.id) }}">
+      {{ hidden(scope, return_to) }}
+      <button class="secondary">{{ '取消公開' if r.is_public else '公開' }}</button>
+    </form>
+    <form method="post" action="{{ url_for('restaurants.delete', restaurant_id=r.id) }}"
+          onsubmit="return confirm('確定要刪除這間餐廳嗎？')">
+      {{ hidden(scope, '') }}
+      <button class="danger">刪除</button>
+    </form>
+  {% elif r.id in saved_ids %}
+    <button class="secondary" disabled>已存入我的清單</button>
+  {% else %}
+    <form method="post" action="{{ url_for('restaurants.save_copy', restaurant_id=r.id) }}">
+      {{ hidden(scope, return_to) }}
+      <button>存入我的清單</button>
+    </form>
+  {% endif %}
+
+  {% if r.id in fav_ids %}
+    <form method="post" action="{{ url_for('restaurants.unfavorite', restaurant_id=r.id) }}">
+      {{ hidden(scope, return_to) }}
+      <button class="secondary">♥ 已收藏</button>
+    </form>
+  {% else %}
+    <form method="post" action="{{ url_for('restaurants.favorite', restaurant_id=r.id) }}">
+      {{ hidden(scope, return_to) }}
+      <button class="secondary">♡ 收藏</button>
+    </form>
+  {% endif %}
+</div>
+{%- endmacro %}

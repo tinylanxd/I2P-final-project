@@ -1,6 +1,8 @@
 import os
 import secrets
 from pathlib import Path
+from .restaurants import bp as restaurants_bp
+
 
 from flask import Flask, flash, redirect, url_for
 from flask_wtf.csrf import CSRFError, CSRFProtect
@@ -49,6 +51,7 @@ def create_app(test_config=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(restaurants_bp)
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(error):

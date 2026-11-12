@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "_macros.html" import rating, stars, map_link, actions %}
+{% block title %}{{ r.name }}{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="toolbar">
+    <a href="{{ url_for('restaurants.index') }}">← 返回清單</a>
+  </div>
+
+  <article class="item">
+    <div class="item-head">
+      <h1>{{ r.name }}</h1>
+      {% if r.category %}<span class="tag">{{ r.category }}</span>{% endif %}
+      {% if r.is_public %}<span class="badge">已公開</span>{% endif %}
+    </div>
+    <p>{{ rating(stats.get(r.id)) }}</p>
+    {% if r.address %}<p>📍 {{ r.address }}</p>{% endif %}
+    {% if r.latitude is not none and r.longitude is not none %}
+    <p class="meta">座標：{{ '%.6f'|format(r.latitude) }}, {{ '%.6f'|format(r.longitude) }}</p>
+    {% endif %}
+    {% if r.address or r.latitude is not none %}<p>{{ map_link(r) }}</p>{% endif %}
+    {% if r.note %}<p>{{ r.note }}</p>{% endif %}
+    <p class="meta">{{ '我新增的' if r.user_id == me else '分享者：' ~ r.owner.username }}</p>
+
+    {{ actions(r, me, 'mine', fav_ids, saved_ids, 'detail') }}
+  </article>
+
+  <section class="item">
+    <h2>菜單</h2>
+    {% if r.menu_items %}
+    <table class="menu">
+      <thead><tr><th>餐點</th><th>價格</th></tr></thead>
+      <tbody>
+        {% for m in r.menu_items %}
+        <tr>
+          <td>{{ m.name }}</td>
+          <td>{% if m.price is not none %}NT$ {{ m.price }}{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="meta">尚未新增餐點</p>
+    {% endif %}
+  </section>
+
+  <section class="item">
+    <h2>我的評價</h2>
+    <form class="review-form" method="post"
+          action="{{ url_for('restaurants.review', restaurant_id=r.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <select name="stars" required aria-label="評分">
+        <option value="">選擇星數</option>
+        {% for n in range(5, 0, -1) %}
+        <option value="{{ n }}" {% if mine and mine.stars == n %}selected{% endif %}>{{ '★' * n }}{{ '☆' * (5 - n) }}　{{ n }} 顆星</option>
+        {% endfor %}
+      </select>
+      <input name="review_comment" maxlength="200" value="{{ mine.comment if mine else '' }}"
+             placeholder="寫下你的評價（選填）">
+      <button>{{ '更新評價' if mine else '送出評價' }}</button>
+    </form>
+    {% if mine %}
+    <form class="inline" method="post"
+          action="{{ url_for('restaurants.delete_review', restaurant_id=r.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="secondary">刪除我的評價</button>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="item">
+    <h2>所有評價（{{ r.reviews|length }}）</h2>
+    {% for v in r.reviews %}
+    <div class="review">
+      <strong>{{ v.user.username }}</strong> {{ stars(v.stars) }}
+      {% if v.comment %}<p>{{ v.comment }}</p>{% endif %}
+    </div>
+    {% else %}
+    <p class="meta">還沒有人評價</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

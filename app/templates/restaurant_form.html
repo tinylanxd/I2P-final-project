@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}{{ heading }}{% endblock %}
+{% block content %}
+{% macro menu_row(name='', price='') %}
+<div class="menu-row">
+  <input name="item_name" maxlength="50" placeholder="餐點名稱" value="{{ name }}">
+  <input name="item_price" type="number" min="0" max="99999" step="1" inputmode="numeric"
+         placeholder="價格" value="{{ price }}">
+  <button type="button" class="secondary remove-row" aria-label="移除這項餐點">✕</button>
+</div>
+{% endmacro %}
+
+<form class="card wide" method="post">
+  <h1>{{ heading }}</h1>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <label>餐廳名稱
+    <input name="name" maxlength="50" value="{{ form.name }}" required autofocus>
+  </label>
+  <label>分類（例如：拉麵、咖啡）
+    <input name="category" maxlength="30" value="{{ form.category }}">
+  </label>
+
+  <fieldset>
+    <legend>菜單（餐點與價格，可新增多項）</legend>
+    <div id="menu-rows">
+      {% for item in form['items'] %}{{ menu_row(item.name, item.price) }}{% else %}{{ menu_row() }}{% endfor %}
+    </div>
+    <button type="button" class="secondary" id="add-row">＋ 新增餐點</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>位置</legend>
+    <label>地址
+      <input name="address" maxlength="200" value="{{ form.address }}">
+    </label>
+    <input type="hidden" name="latitude" id="latitude" value="{{ form.latitude }}">
+    <input type="hidden" name="longitude" id="longitude" value="{{ form.longitude }}">
+    <div class="actions">
+      <button type="button" class="secondary" id="locate">📍 分享目前位置</button>
+      <button type="button" class="secondary" id="clear-location">清除座標</button>
+    </div>
+    <p class="meta" id="location-status">{% if form.latitude and form.longitude %}已設定座標（{{ form.latitude }}, {{ form.longitude }}）{% else %}尚未設定座標，也可以只填地址{% endif %}</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>我的評價</legend>
+    <label>星數
+      <select name="stars">
+        <option value="">不評分</option>
+        {% for n in range(5, 0, -1) %}
+        <option value="{{ n }}" {% if form.stars == n|string %}selected{% endif %}>{{ '★' * n }}{{ '☆' * (5 - n) }}　{{ n }} 顆星</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>評價內容（選填）
+      <input name="review_comment" maxlength="200" value="{{ form.review_comment }}">
+    </label>
+  </fieldset>
+
+  <label>備註
+    <input name="note" maxlength="200" value="{{ form.note }}">
+  </label>
+  <label class="check">
+    <input type="checkbox" name="is_public" {% if form.is_public %}checked{% endif %}>
+    公開到公用資料庫
+  </label>
+  <button>{{ submit_label }}</button>
+  <p><a href="{{ url_for('restaurants.index') }}">返回清單</a></p>
+</form>
+
+<template id="menu-row-template">{{ menu_row() }}</template>
+
+<script>
+(function () {
+  var rows = document.getElementById('menu-rows');
+  var template = document.getElementById('menu-row-template');
+
+  document.getElementById('add-row').addEventListener('click', function () {
+    rows.appendChild(template.content.cloneNode(true));
+    var names = rows.querySelectorAll('input[name="item_name"]');
+    names[names.length - 1].focus();
+  });
+
+  rows.addEventListener('click', function (event) {
+    var button = event.target.closest('.remove-row');
+    if (button) {
+      button.closest('.menu-row').remove();
+    }
+  });
+
+  var lat = document.getElementById('latitude');
+  var lng = document.getElementById('longitude');
+  var status = document.getElementById('location-status');
+
+  document.getElementById('locate').addEventListener('click', function () {
+    if (!navigator.geolocation) {
+      status.textContent = '這個瀏覽器不支援定位，請改填地址';
+      return;
+    }
+    status.textContent = '定位中…';
+    navigator.geolocation.getCurrentPosition(
+      function (position) {
+        lat.value = position.coords.latitude.toFixed(6);
+        lng.value = position.coords.longitude.toFixed(6);
+        status.textContent = '已取得目前位置（' + lat.value + ', ' + lng.value + '）';
+      },
+      function (error) {
+        status.textContent = error.code === 1
+          ? '無法取得位置：你沒有允許定位權限'
+          : '無法取得位置，請稍後再試或改填地址';
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+
+  document.getElementById('clear-location').addEventListener('click', function () {
+    lat.value = '';
+    lng.value = '';
+    status.textContent = '已清除座標';
+  });
+})();
+</script>
+{% endblock %}

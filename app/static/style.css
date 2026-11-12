@@ -1,4 +1,6 @@
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -19,11 +21,30 @@ body {
   box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 }
 
-h1, h2, .card p { margin: 0; }
-label { display: grid; gap: 4px; }
-input, textarea { padding: 8px; font: inherit; }
-textarea { resize: vertical; }
-a { color: #c2410c; }
+h1,
+h2,
+.card p {
+  margin: 0;
+}
+
+label {
+  display: grid;
+  gap: 4px;
+}
+
+input,
+textarea {
+  padding: 8px;
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+a {
+  color: #c2410c;
+}
 
 button {
   padding: 8px 16px;
@@ -42,9 +63,19 @@ button {
   gap: 16px;
 }
 
-.profile { justify-items: center; text-align: center; }
-.muted { color: #78716c; }
-.bio { white-space: pre-line; overflow-wrap: anywhere; }
+.profile {
+  justify-items: center;
+  text-align: center;
+}
+
+.muted {
+  color: #78716c;
+}
+
+.bio {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
 
 .avatar {
   display: grid;
@@ -65,8 +96,16 @@ button {
   margin: 0 auto;
 }
 
-.settings .card { width: 100%; margin: 0; }
-.check { display: flex; align-items: center; gap: 8px; }
+.settings .card {
+  width: 100%;
+  margin: 0;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 .message {
   max-width: 360px;
@@ -75,5 +114,250 @@ button {
   border-radius: 4px;
 }
 
-.message.error { background: #fee2e2; color: #991b1b; }
-.message.success { background: #dcfce7; color: #166534; }
+.message.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.message.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* ---- restaurants ---- */
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.tabs a {
+  padding: 8px 16px;
+  border-radius: 4px;
+  background: #fff;
+  text-decoration: none;
+}
+
+.tabs a.active {
+  background: #c2410c;
+  color: #fff;
+}
+
+.search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.search input[name="q"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.item {
+  margin-bottom: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+}
+
+.item p {
+  margin: 8px 0 0;
+}
+
+.item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.item h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.meta {
+  color: #78716c;
+  font-size: 0.875rem;
+}
+
+.tag,
+.badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+
+.tag {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.badge {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actions form {
+  margin: 0;
+}
+
+a.button {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 4px;
+  background: #c2410c;
+  color: #fff;
+  text-decoration: none;
+}
+
+button.secondary,
+a.button.secondary {
+  border: 1px solid #c2410c;
+  background: #fff;
+  color: #c2410c;
+}
+
+button.danger {
+  background: #991b1b;
+}
+
+button[disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty {
+  margin: 32px 0;
+  color: #78716c;
+  text-align: center;
+}
+
+/* ---- menu, location, ratings, favorites ---- */
+.card.wide {
+  max-width: 560px;
+}
+
+fieldset {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #e7e5e4;
+  border-radius: 8px;
+}
+
+legend {
+  padding: 0 6px;
+  color: #78716c;
+  font-size: 0.875rem;
+}
+
+select {
+  padding: 8px;
+  font: inherit;
+}
+
+.menu-row {
+  display: grid;
+  grid-template-columns: 1fr 110px auto;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.menu-row input {
+  min-width: 0;
+}
+
+.stars {
+  color: #f59e0b;
+  letter-spacing: 1px;
+}
+
+.price {
+  color: #9a3412;
+  font-size: 0.875rem;
+}
+
+.item h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.item h2 a:hover {
+  text-decoration: underline;
+}
+
+.menu-preview {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+table.menu {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.menu th,
+table.menu td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e7e5e4;
+  text-align: left;
+}
+
+table.menu th:last-child,
+table.menu td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.review-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.review-form input[name="review_comment"] {
+  flex: 1;
+  min-width: 160px;
+}
+
+form.inline {
+  margin-top: 8px;
+}
+
+.review {
+  padding: 8px 0;
+  border-bottom: 1px solid #e7e5e4;
+}
+
+.review p {
+  margin: 4px 0 0;
+}

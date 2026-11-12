@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_macros.html" import rating, map_link, actions %}
+{% block title %}{{ {'mine': '我的餐廳', 'public': '公用餐廳', 'favorites': '我的收藏'}[scope] }}{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="toolbar">
+    <a href="{{ url_for('main.home') }}">← 主頁</a>
+    <a class="button" href="{{ url_for('restaurants.new') }}">＋ 新增餐廳</a>
+  </div>
+
+  <nav class="tabs">
+    <a class="{{ 'active' if scope == 'mine' else '' }}"
+       href="{{ url_for('restaurants.index', scope='mine') }}">我的餐廳</a>
+    <a class="{{ 'active' if scope == 'public' else '' }}"
+       href="{{ url_for('restaurants.index', scope='public') }}">公用餐廳</a>
+    <a class="{{ 'active' if scope == 'favorites' else '' }}"
+       href="{{ url_for('restaurants.index', scope='favorites') }}">♥ 收藏</a>
+  </nav>
+
+  <form class="search" method="get" action="{{ url_for('restaurants.index') }}">
+    <input type="hidden" name="scope" value="{{ scope }}">
+    <input name="q" value="{{ q }}" placeholder="搜尋名稱、分類、餐點或地址">
+    <button>搜尋</button>
+  </form>
+
+  {% for r in restaurants %}
+  <article class="item">
+    <div class="item-head">
+      <h2><a href="{{ url_for('restaurants.detail', restaurant_id=r.id) }}">{{ r.name }}</a></h2>
+      {% if r.category %}<span class="tag">{{ r.category }}</span>{% endif %}
+      {% if r.user_id == me and r.is_public %}<span class="badge">已公開</span>{% endif %}
+    </div>
+    <p>{{ rating(stats.get(r.id)) }}</p>
+    {% if r.menu_items %}
+    <ul class="menu-preview">
+      {% for m in r.menu_items[:3] %}
+      <li>{{ m.name }}{% if m.price is not none %} <span class="price">NT$ {{ m.price }}</span>{% endif %}</li>
+      {% endfor %}
+      {% if r.menu_items|length > 3 %}
+      <li class="meta">…等共 {{ r.menu_items|length }} 項餐點</li>
+      {% endif %}
+    </ul>
+    {% endif %}
+    {% if r.address %}<p>📍 {{ r.address }}</p>{% endif %}
+    {% if r.note %}<p>{{ r.note }}</p>{% endif %}
+    {% if r.address or r.latitude is not none %}<p>{{ map_link(r) }}</p>{% endif %}
+    {% if r.user_id != me %}<p class="meta">分享者：{{ r.owner.username }}</p>{% endif %}
+
+    {{ actions(r, me, scope, fav_ids, saved_ids) }}
+  </article>
+  {% else %}
+  <p class="empty">
+    {% if q %}找不到符合的餐廳
+    {% elif scope == 'public' %}公用資料庫目前還沒有餐廳
+    {% elif scope == 'favorites' %}還沒有收藏，到餐廳按「♡ 收藏」加入吧
+    {% else %}還沒有餐廳，按右上角「新增餐廳」開始吧{% endif %}
+  </p>
+  {% endfor %}
+</div>
+{% endblock %}
