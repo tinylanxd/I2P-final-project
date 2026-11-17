@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_social.html" import user_row %}
+{% block title %}好友{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="toolbar">
+    <a href="{{ url_for('main.home') }}">← 主頁</a>
+    <span class="toolbar-actions">
+      <a href="{{ url_for('social.followers', user_id=g.user.id) }}">粉絲</a>
+      <a href="{{ url_for('social.following', user_id=g.user.id) }}">追蹤中</a>
+    </span>
+  </div>
+
+  <form class="search" method="get" action="{{ url_for('social.friends') }}">
+    <input name="q" value="{{ q }}" maxlength="30" placeholder="用用戶名或暱稱找人">
+    <button>搜尋</button>
+  </form>
+
+  {% if q %}
+  <h2>搜尋結果</h2>
+  {% for u in results %}
+    {{ user_row(u, u.id in my_following, request.full_path) }}
+  {% else %}
+    <p class="empty">找不到符合「{{ q }}」的使用者</p>
+  {% endfor %}
+  {% endif %}
+
+  <h2>好友（互相追蹤）</h2>
+  {% for u in friends %}
+    {{ user_row(u, true, request.full_path) }}
+  {% else %}
+    <p class="empty">還沒有好友。追蹤別人，對方也追蹤你之後，就會出現在這裡。</p>
+  {% endfor %}
+</div>
+{% endblock %}

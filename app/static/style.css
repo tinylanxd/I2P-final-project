@@ -388,3 +388,37 @@ form.inline {
 .pick-result h2 {
   font-size: 1.4rem;
 }
+/* ---------------------------------------------------------------- social */
+
+.follow-stats {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.follow-stats a {
+  color: inherit;
+}
+
+.avatar.small {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  font-size: 18px;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-row-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

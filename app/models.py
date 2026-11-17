@@ -102,3 +102,16 @@ class Favorite(db.Model):
         db.Integer, db.ForeignKey("restaurant.id"), nullable=False
     )
 
+
+
+class Follow(db.Model):
+    """follower_id follows followed_id. Two people who follow each other are friends."""
+
+    __table_args__ = (
+        db.UniqueConstraint("follower_id", "followed_id"),
+        db.CheckConstraint("follower_id != followed_id"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    follower_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    followed_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)

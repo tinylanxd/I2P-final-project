@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_social.html" import follow_button %}
 {% block title %}{{ user.display_name }}{% endblock %}
 {% block content %}
 <nav class="top">
@@ -17,6 +18,17 @@
   <h1>{{ user.display_name }}</h1>
   {% if user.nickname %}<p class="muted">用戶名：{{ user.username }}</p>{% endif %}
   {% if user.bio %}<p class="bio">{{ user.bio }}</p>{% endif %}
+  <p class="follow-stats">
+    <a href="{{ url_for('social.followers', user_id=user.id) }}"><strong>{{ follower_count(user.id) }}</strong> 粉絲</a>
+    <a href="{{ url_for('social.following', user_id=user.id) }}"><strong>{{ following_count(user.id) }}</strong> 追蹤中</a>
+  </p>
+  {% if g.user and g.user.id != user.id %}
+    {% set i_follow = is_following(g.user.id, user.id) %}
+    {% set follows_me = is_following(user.id, g.user.id) %}
+    {% if i_follow and follows_me %}<span class="badge">好友</span>
+    {% elif follows_me %}<span class="tag">追蹤了你</span>{% endif %}
+    {{ follow_button(user, i_follow) }}
+  {% endif %}
   {% if g.user and g.user.id == user.id %}
     <a href="{{ url_for('users.settings') }}">編輯個人資料</a>
   {% endif %}

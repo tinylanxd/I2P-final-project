@@ -1,0 +1,35 @@
+{# Follow / unfollow button and a one-line user row, shared by the social pages. #}
+
+{% macro avatar(user, cls="avatar small") -%}
+{%- if user.has_avatar -%}
+<img class="{{ cls }}" src="{{ url_for('users.avatar', user_id=user.id) }}" alt="">
+{%- else -%}
+<span class="{{ cls }}" aria-hidden="true">{{ user.display_name[0] }}</span>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro follow_button(user, following, next=None) -%}
+{%- if g.user and g.user.id != user.id -%}
+<form class="inline" method="post"
+      action="{{ url_for('social.unfollow' if following else 'social.follow', user_id=user.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  {% if following %}
+  <button class="secondary">已追蹤 ✓</button>
+  {% else %}
+  <button>＋ 追蹤</button>
+  {% endif %}
+</form>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro user_row(user, following, next) -%}
+<article class="item user-row">
+  {{ avatar(user) }}
+  <div class="user-row-name">
+    <a href="{{ url_for('users.profile', user_id=user.id) }}">{{ user.display_name }}</a>
+    {% if user.nickname %}<span class="meta">@{{ user.username }}</span>{% endif %}
+  </div>
+  {{ follow_button(user, following, next) }}
+</article>
+{%- endmacro %}

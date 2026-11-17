@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "_social.html" import user_row %}
+{% set heading = '粉絲' if kind == 'followers' else '追蹤中' %}
+{% block title %}{{ user.display_name }} 的{{ heading }}{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="toolbar">
+    <a href="{{ url_for('users.profile', user_id=user.id) }}">← {{ user.display_name }}</a>
+  </div>
+
+  <nav class="tabs">
+    <a class="{{ 'active' if kind == 'followers' else '' }}"
+       href="{{ url_for('social.followers', user_id=user.id) }}">粉絲</a>
+    <a class="{{ 'active' if kind == 'following' else '' }}"
+       href="{{ url_for('social.following', user_id=user.id) }}">追蹤中</a>
+  </nav>
+
+  {% for u in users %}
+    {{ user_row(u, u.id in my_following, request.path) }}
+  {% else %}
+    <p class="empty">{{ '還沒有粉絲' if kind == 'followers' else '還沒有追蹤任何人' }}</p>
+  {% endfor %}
+</div>
+{% endblock %}

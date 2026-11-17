@@ -14,6 +14,7 @@ from .models import db
 from .users import MAX_UPLOAD_MB
 from .users import bp as users_bp
 from .restaurants import bp as restaurants_bp
+from .social import bp as social_bp
 
 csrf = CSRFProtect()
 
@@ -54,6 +55,7 @@ def create_app(test_config=None):
     app.register_blueprint(main_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(restaurants_bp)
+    app.register_blueprint(social_bp)
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(error):
