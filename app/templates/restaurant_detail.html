@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import rating, stars, map_link, actions %}
+{% from "_macros.html" import rating, stars, map_link, actions, price_tag %}
 {% block title %}{{ r.name }}{% endblock %}
 {% block content %}
 <div class="page">
@@ -11,6 +11,7 @@
     <div class="item-head">
       <h1>{{ r.name }}</h1>
       {% if r.category %}<span class="tag">{{ r.category }}</span>{% endif %}
+      {{ price_tag(r.price_level) }}
       {% if r.is_public %}<span class="badge">已公開</span>{% endif %}
     </div>
     <p>{{ rating(stats.get(r.id)) }}</p>

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% from "_macros.html" import rating, map_link, price_tag %}
+{% block title %}隨機抽一間{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="toolbar">
+    <a href="{{ url_for('main.home') }}">← 主頁</a>
+    <a href="{{ url_for('restaurants.index', scope=scope) }}">餐廳清單</a>
+  </div>
+
+  <form class="card wide pick-form" method="get" action="{{ url_for('restaurants.pick') }}" id="pick-form">
+    <h1>🎲 隨機抽一間</h1>
+    {# Hidden, not the button's value: form.submit() in the script below does not send the button. #}
+    <input type="hidden" name="draw" value="1">
+    {% if result %}<input type="hidden" name="last" value="{{ result.restaurant.id }}">{% endif %}
+
+    <label>從哪裡抽
+      <select name="scope">
+        {% for value, label in scope_labels.items() %}
+        <option value="{{ value }}" {% if scope == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>距離（直線距離）
+      <select name="distance" id="distance">
+        <option value="">不限</option>
+        {% for metres, label in distance_options.items() %}
+        <option value="{{ metres }}" {% if distance == metres|string %}selected{% endif %}>{{ label }}以內</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <fieldset>
+      <legend>價位（可複選，都不勾就是不限）</legend>
+      <div class="price-options">
+        {% for level, label in PRICE_LEVELS.items() %}
+        <label class="check">
+          <input type="checkbox" name="price" value="{{ level }}" {% if level|string in prices %}checked{% endif %}>
+          {{ '$' * level }}（{{ label }}）
+        </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <p class="meta">沒有座標或沒有設定價位的餐廳也可能被抽到，結果會註明。</p>
+    <button id="pick-button">{{ '🎲 再抽一次' if result else '🎲 抽一間' }}</button>
+    <p class="meta" id="pick-status" aria-live="polite"></p>
+  </form>
+
+  {% if error %}
+  <p class="message error" role="alert">{{ error }}</p>
+  {% elif result %}
+  {% set r = result.restaurant %}
+  <article class="item pick-result">
+    <p class="meta">符合條件的餐廳共 {{ count }} 間，這次抽到：</p>
+    <div class="item-head">
+      <h2><a href="{{ url_for('restaurants.detail', restaurant_id=r.id) }}">{{ r.name }}</a></h2>
+      {% if r.category %}<span class="tag">{{ r.category }}</span>{% endif %}
+      {{ price_tag(r.price_level) }}
+    </div>
+    <p>{{ rating(stats.get(r.id)) }}</p>
+    {% if result.distance %}<p>🚶 距離{{ result.distance }}</p>{% endif %}
+    {% if result.unknown_distance %}<p class="meta">沒有座標，無法確認距離</p>{% endif %}
+    {% if result.unknown_price %}<p class="meta">未設定價位</p>{% endif %}
+    {% if r.address %}<p>📍 {{ r.address }}</p>{% endif %}
+    {% if r.address or r.latitude is not none %}<p>{{ map_link(r) }}</p>{% endif %}
+  </article>
+  {% elif drawn %}
+  <p class="empty">沒有符合條件的餐廳</p>
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  var form = document.getElementById('pick-form');
+  var distance = document.getElementById('distance');
+  var button = document.getElementById('pick-button');
+  var status = document.getElementById('pick-status');
+
+  form.addEventListener('submit', async function (event) {
+    if (!distance.value) return;  // No distance limit: no location needed.
+    event.preventDefault();
+    button.disabled = true;
+    status.textContent = '定位中…';
+    // Saves the location in the session (or clears it); the server reports a missing one.
+    if (typeof requestUserLocation === 'function') await requestUserLocation();
+    form.submit();
+  });
+
+  // Coming back with the browser's Back button restores the old page state.
+  window.addEventListener('pageshow', function () {
+    button.disabled = false;
+    status.textContent = '';
+  });
+})();
+</script>
+{% endblock %}
