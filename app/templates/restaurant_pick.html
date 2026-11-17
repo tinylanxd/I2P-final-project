@@ -3,11 +3,6 @@
 {% block title %}隨機抽一間{% endblock %}
 {% block content %}
 <div class="page">
-  <div class="toolbar">
-    <a href="{{ url_for('main.home') }}">← 主頁</a>
-    <a href="{{ url_for('restaurants.index', scope=scope) }}">餐廳清單</a>
-  </div>
-
   <form class="card wide pick-form" method="get" action="{{ url_for('restaurants.pick') }}" id="pick-form">
     <h1>🎲 隨機抽一間</h1>
     {# Hidden, not the button's value: form.submit() in the script below does not send the button. #}

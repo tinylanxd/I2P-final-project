@@ -357,11 +357,6 @@ class RestaurantTestCase(unittest.TestCase):
 
     # ---- navigation ----
 
-    def test_home_links_to_restaurants(self):
-        html = self.alice.get("/home").get_data(as_text=True)
-
-        self.assertIn("/restaurants/", html)
-
     def test_actions_return_to_the_same_tab(self):
         self.add(self.alice, is_public="on")
         restaurant_id = self.rows()[0].id

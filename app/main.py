@@ -1,4 +1,4 @@
-from flask import Blueprint, redirect, render_template, session, url_for
+from flask import Blueprint, redirect, session, url_for
 
 from .auth import login_required
 
@@ -15,4 +15,5 @@ def index():
 @bp.route("/home")
 @login_required
 def home():
-    return render_template("home.html")
+    # Every page has the shared button bar, so home is simply the user's own list.
+    return redirect(url_for("restaurants.index"))

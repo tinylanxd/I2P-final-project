@@ -159,7 +159,7 @@ class PickPageTestCase(unittest.TestCase):
         self.assertNotIn("沒有符合條件的餐廳", html)
 
     def test_entry_points(self):
-        self.assertIn('href="/restaurants/pick"', self.html(self.alice, "/home"))
+        self.assertIn('href="/restaurants/pick"', self.html(self.alice, "/restaurants/new"))
         self.assertIn('href="/restaurants/pick?scope=mine"', self.html(self.alice, "/restaurants/"))
 
     def test_no_filters_picks_own_restaurants_only(self):

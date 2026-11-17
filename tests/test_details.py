@@ -501,13 +501,6 @@ class DetailsTestCase(unittest.TestCase):
         self.assertEqual(self.query(Review), [])
         self.assertEqual(self.query(Favorite), [])
 
-    # ---- navigation ----
-
-    def test_home_links_to_favorites(self):
-        html = self.text(self.alice.get("/home"))
-
-        self.assertIn("scope=favorites", html)
-
 
 if __name__ == "__main__":
     unittest.main()

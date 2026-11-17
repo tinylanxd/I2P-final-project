@@ -1,0 +1,27 @@
+{# The shared button bar at the top of every page while logged in.
+   It is the same HTML in the same place on every page, so the buttons never move. #}
+{% set here = request.endpoint %}
+{% set list_scope = scope if here == 'restaurants.index' else none %}
+
+{% macro nav_button(label, href, active) -%}
+<a class="button{{ '' if active else ' secondary' }}" href="{{ href }}"
+   {%- if active %} aria-current="page"{% endif %}>{{ label }}</a>
+{%- endmacro %}
+
+<header class="site-nav">
+  <nav class="nav-main" aria-label="功能">
+    {{ nav_button('我的餐廳', url_for('restaurants.index', scope='mine'), list_scope == 'mine') }}
+    {{ nav_button('公用餐廳', url_for('restaurants.index', scope='public'), list_scope == 'public') }}
+    {{ nav_button('♥ 我的收藏', url_for('restaurants.index', scope='favorites'), list_scope == 'favorites') }}
+    {{ nav_button('＋ 新增餐廳', url_for('restaurants.new'), here == 'restaurants.new') }}
+    {# On the list page, draw from the scope being viewed. #}
+    {{ nav_button('🎲 隨機抽一間', url_for('restaurants.pick', scope=list_scope), here == 'restaurants.pick') }}
+  </nav>
+  <div class="nav-user">
+    <a href="{{ url_for('users.profile', user_id=g.user.id) }}">我的個人頁</a>
+    <form method="post" action="{{ url_for('auth.logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="secondary">登出</button>
+    </form>
+  </div>
+</header>

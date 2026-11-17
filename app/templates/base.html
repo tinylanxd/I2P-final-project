@@ -9,6 +9,8 @@
   <script src="{{ url_for('static', filename='location.js') }}" defer></script>
 </head>
 <body>
+  {# First in the body, so flash messages never push the bar down. #}
+  {% block nav %}{% if g.user %}{% include "_nav.html" %}{% endif %}{% endblock %}
   {% for category, message in get_flashed_messages(with_categories=true) %}
     <p class="message {{ category }}" role="alert">{{ message }}</p>
   {% endfor %}

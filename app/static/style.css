@@ -2,6 +2,12 @@
   box-sizing: border-box;
 }
 
+/* Reserve the scrollbar's space on every page, so the centered layout does not
+   shift sideways between short pages and long ones. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   padding: 16px;
@@ -46,13 +52,19 @@ a {
   color: #c2410c;
 }
 
+/* Every button has a 1px border and a fixed line height, so filled and outlined
+   buttons are the same height, and emoji such as 🎲 or ♥ do not make one taller. */
 button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 8px 16px;
-  border: 0;
+  border: 1px solid #c2410c;
   border-radius: 4px;
   background: #c2410c;
   color: #fff;
   font: inherit;
+  line-height: 1.4;
   cursor: pointer;
 }
 
@@ -136,24 +148,6 @@ button {
   align-items: center;
 }
 
-.tabs {
-  display: flex;
-  gap: 8px;
-  margin: 16px 0;
-}
-
-.tabs a {
-  padding: 8px 16px;
-  border-radius: 4px;
-  background: #fff;
-  text-decoration: none;
-}
-
-.tabs a.active {
-  background: #c2410c;
-  color: #fff;
-}
-
 .search {
   display: flex;
   gap: 8px;
@@ -224,11 +218,15 @@ button {
 }
 
 a.button {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 8px 16px;
+  border: 1px solid #c2410c;
   border-radius: 4px;
   background: #c2410c;
   color: #fff;
+  line-height: 1.4;
   text-decoration: none;
 }
 
@@ -240,6 +238,7 @@ a.button.secondary {
 }
 
 button.danger {
+  border-color: #991b1b;
   background: #991b1b;
 }
 
@@ -363,12 +362,6 @@ form.inline {
 }
 
 /* ---- random pick ---- */
-.toolbar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .card.pick-form {
   margin: 16px auto;
 }
@@ -387,4 +380,31 @@ form.inline {
 
 .pick-result h2 {
   font-size: 1.4rem;
+}
+
+/* ---- shared button bar (_nav.html) ---- */
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 16px;
+  max-width: 720px;
+  margin: 0 auto 16px;
+}
+
+.nav-main,
+.nav-user {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-user {
+  gap: 16px;
+}
+
+.nav-user form {
+  margin: 0;
 }

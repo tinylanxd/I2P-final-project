@@ -1,13 +1,11 @@
 {% extends "base.html" %}
 {% block title %}{{ user.display_name }}{% endblock %}
 {% block content %}
+{% if not g.user %}
 <nav class="top">
-  {% if g.user %}
-    <a href="{{ url_for('main.home') }}">回主頁</a>
-  {% else %}
-    <a href="{{ url_for('auth.login') }}">登入</a>
-  {% endif %}
+  <a href="{{ url_for('auth.login') }}">登入</a>
 </nav>
+{% endif %}
 <section class="card profile">
   {% if user.has_avatar %}
     <img class="avatar" src="{{ url_for('users.avatar', user_id=user.id) }}" alt="頭像">

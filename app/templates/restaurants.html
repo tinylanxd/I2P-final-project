@@ -3,23 +3,6 @@
 {% block title %}{{ {'mine': '我的餐廳', 'public': '公用餐廳', 'favorites': '我的收藏'}[scope] }}{% endblock %}
 {% block content %}
 <div class="page">
-  <div class="toolbar">
-    <a href="{{ url_for('main.home') }}">← 主頁</a>
-    <span class="toolbar-actions">
-      <a class="button secondary" href="{{ url_for('restaurants.pick', scope=scope) }}">🎲 隨機抽一間</a>
-      <a class="button" href="{{ url_for('restaurants.new') }}">＋ 新增餐廳</a>
-    </span>
-  </div>
-
-  <nav class="tabs">
-    <a class="{{ 'active' if scope == 'mine' else '' }}"
-       href="{{ url_for('restaurants.index', scope='mine') }}">我的餐廳</a>
-    <a class="{{ 'active' if scope == 'public' else '' }}"
-       href="{{ url_for('restaurants.index', scope='public') }}">公用餐廳</a>
-    <a class="{{ 'active' if scope == 'favorites' else '' }}"
-       href="{{ url_for('restaurants.index', scope='favorites') }}">♥ 收藏</a>
-  </nav>
-
   <form class="search" method="get" action="{{ url_for('restaurants.index') }}">
     <input type="hidden" name="scope" value="{{ scope }}">
     <input name="q" value="{{ q }}" placeholder="搜尋名稱、分類、餐點或地址">
@@ -57,7 +40,7 @@
     {% if q %}找不到符合的餐廳
     {% elif scope == 'public' %}公用資料庫目前還沒有餐廳
     {% elif scope == 'favorites' %}還沒有收藏，到餐廳按「♡ 收藏」加入吧
-    {% else %}還沒有餐廳，按右上角「新增餐廳」開始吧{% endif %}
+    {% else %}還沒有餐廳，按上方「＋ 新增餐廳」開始吧{% endif %}
   </p>
   {% endfor %}
 </div>

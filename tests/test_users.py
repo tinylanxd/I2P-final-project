@@ -95,10 +95,10 @@ class ProfilePageTests(UsersTestCase):
         self.logout()
         self.assertNotIn("編輯個人資料", self.client.get("/users/2").get_data(as_text=True))
 
-    def test_home_links_to_own_profile(self):
+    def test_nav_links_to_own_profile(self):
         self.signed_in()
 
-        self.assertIn('href="/users/1"', self.client.get("/home").get_data(as_text=True))
+        self.assertIn('href="/users/1"', self.client.get("/restaurants/").get_data(as_text=True))
 
     def test_settings_require_login(self):
         self.register()
@@ -163,11 +163,11 @@ class UsernameTests(UsersTestCase):
 
         self.assertIn("用戶名已更新", response.get_data(as_text=True))
         self.assertEqual(self.user(2)["username"], "alice2")
-        self.assertEqual(self.client.get("/home").status_code, 200)
+        self.assertEqual(self.client.get("/restaurants/").status_code, 200)
 
         self.logout()
         self.assertEqual(self.login("alice").request.path, "/login")
-        self.assertEqual(self.login("alice2").request.path, "/home")
+        self.assertEqual(self.login("alice2").request.path, "/restaurants/")
 
     def test_keeping_same_username_is_fine(self):
         response = self.post("/settings/username", username="alice")
@@ -184,7 +184,7 @@ class UsernameTests(UsersTestCase):
                 response = self.post("/settings/username", username=username)
                 self.assertIn(message, response.get_data(as_text=True))
                 self.assertEqual(self.user(2)["username"], "alice")
-                self.assertEqual(self.client.get("/home").status_code, 200)
+                self.assertEqual(self.client.get("/restaurants/").status_code, 200)
 
 
 class PasswordTests(UsersTestCase):
@@ -196,11 +196,11 @@ class PasswordTests(UsersTestCase):
         response = self.post("/settings/password", password="new", confirm_password="new")
 
         self.assertIn("密碼已更新", response.get_data(as_text=True))
-        self.assertEqual(self.client.get("/home").status_code, 200)
+        self.assertEqual(self.client.get("/restaurants/").status_code, 200)
 
         self.logout()
         self.assertEqual(self.login(password="pw").request.path, "/login")
-        self.assertEqual(self.login(password="new").request.path, "/home")
+        self.assertEqual(self.login(password="new").request.path, "/restaurants/")
 
     def test_invalid_passwords_are_rejected(self):
         for password, confirm, message in [
@@ -214,7 +214,7 @@ class PasswordTests(UsersTestCase):
                 self.assertIn(message, response.get_data(as_text=True))
 
         self.logout()
-        self.assertEqual(self.login(password="pw").request.path, "/home")
+        self.assertEqual(self.login(password="pw").request.path, "/restaurants/")
 
 
 class AvatarTests(UsersTestCase):

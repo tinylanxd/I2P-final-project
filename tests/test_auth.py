@@ -39,7 +39,7 @@ class AuthTestCase(unittest.TestCase):
     def test_register_does_not_log_in(self):
         self.post("/register")
 
-        self.assertEqual(self.client.get("/home").status_code, 302)
+        self.assertEqual(self.client.get("/restaurants/").status_code, 302)
 
     def test_duplicate_username_is_rejected(self):
         self.post("/register")
@@ -75,14 +75,14 @@ class AuthTestCase(unittest.TestCase):
     def test_any_nonblank_password_is_accepted(self):
         self.post("/register", password="1")
 
-        self.assertEqual(self.post("/login", password="1").request.path, "/home")
+        self.assertEqual(self.post("/login", password="1").request.path, "/restaurants/")
 
-    def test_login_leads_to_home(self):
+    def test_login_leads_to_my_restaurants(self):
         self.post("/register")
         response = self.post("/login")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.request.path, "/home")
+        self.assertEqual(response.request.path, "/restaurants/")
 
     def test_login_failures_show_the_same_error(self):
         self.post("/register")
@@ -126,7 +126,7 @@ class AuthTestCase(unittest.TestCase):
         response = self.client.post("/logout", follow_redirects=True)
 
         self.assertEqual(response.request.path, "/login")
-        self.assertEqual(self.client.get("/home").status_code, 302)
+        self.assertEqual(self.client.get("/restaurants/").status_code, 302)
 
     def test_index_redirects_by_login_state(self):
         self.assertEqual(
@@ -137,7 +137,7 @@ class AuthTestCase(unittest.TestCase):
         self.post("/login")
 
         self.assertEqual(
-            self.client.get("/", follow_redirects=True).request.path, "/home"
+            self.client.get("/", follow_redirects=True).request.path, "/restaurants/"
         )
 
 
