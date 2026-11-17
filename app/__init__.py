@@ -1,7 +1,6 @@
 import os
 import secrets
 from pathlib import Path
-from .restaurants import bp as restaurants_bp
 
 
 from flask import Flask, flash, redirect, url_for
@@ -13,6 +12,7 @@ from .main import bp as main_bp
 from .models import db
 from .users import MAX_UPLOAD_MB
 from .users import bp as users_bp
+from .restaurants import bp as restaurants_bp
 
 csrf = CSRFProtect()
 
