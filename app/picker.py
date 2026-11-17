@@ -8,6 +8,9 @@ EARTH_RADIUS_M = 6371000
 # Distance limits offered on the pick page: metres -> label.
 DISTANCE_OPTIONS = {500: "500 公尺", 1000: "1 公里", 3000: "3 公里", 5000: "5 公里"}
 
+# How many restaurants one draw may return (the page offers 1..MAX_PICK_COUNT).
+MAX_PICK_COUNT = 5
+
 
 def distance_m(lat1, lng1, lat2, lng2):
     """Straight-line (haversine) distance in metres."""
@@ -49,3 +52,22 @@ def choose(candidates, last_id=None):
         others = [c for c in candidates if c[0].id != last_id]
         candidates = others or candidates
     return random.choice(candidates) if candidates else None
+
+
+def choose_many(candidates, count, avoid_ids=()):
+    """Pick up to `count` different (restaurant, distance) pairs, in random order.
+
+    Restaurants whose id is in avoid_ids (the previous draw) are only used when
+    there are not enough other candidates. Returns fewer than `count` pairs
+    when there are fewer candidates, and [] for an empty list."""
+    if count < 1:
+        return []
+    avoid = set(avoid_ids)
+    fresh = [c for c in candidates if c[0].id not in avoid]
+    repeats = [c for c in candidates if c[0].id in avoid]
+    random.shuffle(fresh)
+    random.shuffle(repeats)
+    chosen = (fresh + repeats)[:count]
+    # Shuffle again so that repeats are not always listed last.
+    random.shuffle(chosen)
+    return chosen

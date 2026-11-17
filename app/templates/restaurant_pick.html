@@ -12,12 +12,20 @@
     <h1>🎲 隨機抽一間</h1>
     {# Hidden, not the button's value: form.submit() in the script below does not send the button. #}
     <input type="hidden" name="draw" value="1">
-    {% if result %}<input type="hidden" name="last" value="{{ result.restaurant.id }}">{% endif %}
+    {% for item in results %}<input type="hidden" name="last" value="{{ item.restaurant.id }}">{% endfor %}
 
     <label>從哪裡抽
       <select name="scope">
         {% for value, label in scope_labels.items() %}
         <option value="{{ value }}" {% if scope == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>抽幾間
+      <select name="count">
+        {% for n in count_options %}
+        <option value="{{ n }}" {% if pick_count == n %}selected{% endif %}>{{ n }} 間</option>
         {% endfor %}
       </select>
     </label>
@@ -44,16 +52,18 @@
     </fieldset>
 
     <p class="meta">沒有座標或沒有設定價位的餐廳也可能被抽到，結果會註明。</p>
-    <button id="pick-button">{{ '🎲 再抽一次' if result else '🎲 抽一間' }}</button>
+    <button id="pick-button">{{ '🎲 再抽一次' if results else '🎲 開始抽' }}</button>
     <p class="meta" id="pick-status" aria-live="polite"></p>
   </form>
 
   {% if error %}
   <p class="message error" role="alert">{{ error }}</p>
-  {% elif result %}
+  {% elif results %}
+  <p class="meta">符合條件的餐廳共 {{ count }} 間，這次抽到 {{ results|length }} 間{% if results|length < pick_count %}（你想抽 {{ pick_count }} 間，但符合條件的只有這些）{% endif %}：</p>
+  {% for result in results %}
   {% set r = result.restaurant %}
   <article class="item pick-result">
-    <p class="meta">符合條件的餐廳共 {{ count }} 間，這次抽到：</p>
+    {% if results|length > 1 %}<p class="meta">第 {{ loop.index }} 間</p>{% endif %}
     <div class="item-head">
       <h2><a href="{{ url_for('restaurants.detail', restaurant_id=r.id) }}">{{ r.name }}</a></h2>
       {% if r.category %}<span class="tag">{{ r.category }}</span>{% endif %}
@@ -66,6 +76,7 @@
     {% if r.address %}<p>📍 {{ r.address }}</p>{% endif %}
     {% if r.address or r.latitude is not none %}<p>{{ map_link(r) }}</p>{% endif %}
   </article>
+  {% endfor %}
   {% elif drawn %}
   <p class="empty">沒有符合條件的餐廳</p>
   {% endif %}

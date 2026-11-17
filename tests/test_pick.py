@@ -3,7 +3,13 @@ from types import SimpleNamespace
 
 from app import create_app
 from app.models import Restaurant, db
-from app.picker import choose, distance_m, format_distance, within_distance
+from app.picker import (
+    choose,
+    choose_many,
+    distance_m,
+    format_distance,
+    within_distance,
+)
 
 # A fixed "user location" and points at known straight-line distances from it.
 HOME = {"latitude": 25.0, "longitude": 121.5, "accuracy": 10}
@@ -46,6 +52,34 @@ class PickerTestCase(unittest.TestCase):
             self.assertIs(choose([(a, None), (b, None)], last_id=1)[0], b)
         # ...but a single candidate is still returned.
         self.assertIs(choose([(a, None)], last_id=1)[0], a)
+
+    def test_choose_many_returns_different_restaurants(self):
+        pairs = [(SimpleNamespace(id=i), None) for i in range(1, 6)]
+        for _ in range(20):
+            chosen = choose_many(pairs, 3)
+            self.assertEqual(len(chosen), 3)
+            self.assertEqual(len({r.id for r, _ in chosen}), 3)
+
+    def test_choose_many_with_few_candidates_or_bad_count(self):
+        pairs = [(SimpleNamespace(id=i), None) for i in (1, 2)]
+        self.assertEqual(len(choose_many(pairs, 5)), 2)
+        self.assertEqual(choose_many([], 3), [])
+        self.assertEqual(choose_many(pairs, 0), [])
+
+    def test_choose_many_avoids_previous_picks_only_when_possible(self):
+        pairs = [(SimpleNamespace(id=i), None) for i in (1, 2, 3, 4)]
+        for _ in range(20):
+            ids = {r.id for r, _ in choose_many(pairs, 2, avoid_ids=[1, 2])}
+            self.assertEqual(ids, {3, 4})
+        # Only two others exist, so one of the avoided ones fills the gap.
+        for _ in range(20):
+            ids = {r.id for r, _ in choose_many(pairs[1:], 3, avoid_ids=[2])}
+            self.assertEqual(ids, {2, 3, 4})
+
+    def test_choose_many_order_is_random(self):
+        pairs = [(SimpleNamespace(id=i), None) for i in (1, 2, 3)]
+        firsts = {choose_many(pairs, 3)[0][0].id for _ in range(100)}
+        self.assertGreater(len(firsts), 1)
 
 
 class PickPageTestCase(unittest.TestCase):
@@ -154,7 +188,7 @@ class PickPageTestCase(unittest.TestCase):
 
         html = self.pick(self.alice, draw="")
 
-        self.assertIn("🎲 抽一間", html)
+        self.assertIn("🎲 開始抽", html)
         self.assertNotIn(NO_RESULT, html)
         self.assertNotIn("沒有符合條件的餐廳", html)
 
@@ -310,6 +344,109 @@ class PickPageTestCase(unittest.TestCase):
         self.assertIn('value="2" checked', html)
         self.assertIn('value="3" checked', html)
         self.assertNotIn('value="1" checked', html)
+
+    # ---- how many restaurants to draw ----
+
+    def result_count(self, html):
+        return html.count('class="item pick-result"')
+
+    def names_in_order(self, html, names):
+        """The given names that appear as results, in page order."""
+        marks = [(html.find(f">{name}</a></h2>"), name) for name in names]
+        return [name for index, name in sorted(marks) if index != -1]
+
+    def add_many(self, names):
+        for name in names:
+            self.add(self.alice, name)
+
+    def test_count_defaults_to_one(self):
+        names = ["A店", "B店", "C店"]
+        self.add_many(names)
+
+        form = self.pick(self.alice, draw="")
+        html = self.pick(self.alice)
+
+        self.assertIn('<select name="count">', form)
+        self.assertIn('<option value="1" selected>', form)
+        self.assertEqual(self.result_count(html), 1)
+        self.assertNotIn("第 1 間", html)
+
+    def test_pick_several_restaurants(self):
+        names = ["A店", "B店", "C店", "D店"]
+        self.add_many(names)
+
+        html = self.pick(self.alice, count="3")
+
+        shown = self.names_in_order(html, names)
+        self.assertEqual(len(set(shown)), 3)
+        self.assertEqual(self.result_count(html), 3)
+        self.assertIn("符合條件的餐廳共 4 間，這次抽到 3 間", html)
+        self.assertIn("第 1 間", html)
+        self.assertIn("第 3 間", html)
+        self.assertIn('<option value="3" selected>', html)
+        self.assertEqual(html.count('name="last"'), 3)
+
+    def test_count_larger_than_candidates_shows_all(self):
+        names = ["A店", "B店"]
+        self.add_many(names)
+
+        html = self.pick(self.alice, count="5")
+
+        self.assertEqual(sorted(self.names_in_order(html, names)), names)
+        self.assertIn("這次抽到 2 間", html)
+        self.assertIn("符合條件的只有這些", html)
+
+    def test_invalid_count_shows_error(self):
+        self.add_many(["A店"])
+
+        for value in ["0", "6", "-1", "x"]:
+            with self.subTest(value=value):
+                html = self.pick(self.alice, count=value)
+                self.assertIn("抽取數量不正確", html)
+                self.assertNotIn(NO_RESULT, html)
+
+    def test_result_order_is_random(self):
+        names = ["A店", "B店", "C店"]
+        self.add_many(names)
+
+        firsts = {
+            self.names_in_order(self.pick(self.alice, count="3"), names)[0]
+            for _ in range(60)
+        }
+
+        self.assertGreater(len(firsts), 1)
+
+    def test_draw_again_avoids_previous_picks(self):
+        names = ["A店", "B店", "C店", "D店"]
+        self.add_many(names)
+        last = [str(self.restaurant(name).id) for name in ["A店", "B店"]]
+
+        for _ in range(10):
+            html = self.pick(self.alice, count="2", last=last)
+            self.assertEqual(sorted(self.names_in_order(html, names)), ["C店", "D店"])
+
+    def test_previous_picks_fill_the_gap_when_needed(self):
+        names = ["A店", "B店", "C店"]
+        self.add_many(names)
+        last = [str(self.restaurant(name).id) for name in ["A店", "B店"]]
+
+        for _ in range(10):
+            html = self.pick(self.alice, count="2", last=last)
+            self.assertIn(">C店</a></h2>", html)
+            self.assertEqual(self.result_count(html), 2)
+
+    def test_count_works_with_other_filters(self):
+        self.add(self.alice, "便宜店", price_level="1")
+        self.add(self.alice, "高價店", price_level="3")
+        self.add(self.alice, "未知店")
+
+        html = self.pick(self.alice, count="3", price="1")
+
+        self.assertEqual(
+            sorted(self.names_in_order(html, ["便宜店", "高價店", "未知店"])),
+            ["便宜店", "未知店"],
+        )
+        self.assertIn("這次抽到 2 間", html)
 
 
 if __name__ == "__main__":

@@ -17,7 +17,13 @@ from flask import (
 from .auth import login_required
 from .location import get_user_location
 from .models import PRICE_LEVELS, Favorite, MenuItem, Restaurant, Review, db
-from .picker import DISTANCE_OPTIONS, choose, format_distance, within_distance
+from .picker import (
+    DISTANCE_OPTIONS,
+    MAX_PICK_COUNT,
+    choose_many,
+    format_distance,
+    within_distance,
+)
 
 bp = Blueprint("restaurants", __name__, url_prefix="/restaurants")
 
@@ -29,6 +35,7 @@ SCOPE_LABELS = {"mine": "我的餐廳", "public": "公用餐廳", "favorites": "
 # Form and query-string values ("1", "500", ...) mapped to their typed keys.
 PRICE_CHOICES = {str(level): level for level in PRICE_LEVELS}
 DISTANCE_CHOICES = {str(metres): metres for metres in DISTANCE_OPTIONS}
+COUNT_CHOICES = {str(n): n for n in range(1, MAX_PICK_COUNT + 1)}
 
 MAX_ITEMS = 30
 MAX_ITEM_NAME = 50
@@ -272,8 +279,12 @@ def parse_pick_filters(distance, prices):
     return DISTANCE_CHOICES.get(distance), {PRICE_CHOICES[p] for p in prices}, None
 
 
-def draw(scope, me, max_m, levels, origin, last_id):
-    """Pick a random restaurant. Returns (result dict or None, candidate count).
+def draw(scope, me, max_m, levels, origin, last_ids, pick_count):
+    """Pick up to pick_count random restaurants, in random order.
+
+    Returns (list of result dicts, candidate count). The list is empty when
+    nothing matches, and shorter than pick_count when fewer restaurants match.
+    Restaurants in last_ids (the previous draw) are avoided when possible.
 
     Missing data never rules a restaurant out: one without coordinates or
     without a price level stays a candidate, and the result says so.
@@ -293,17 +304,16 @@ def draw(scope, me, max_m, levels, origin, last_id):
     else:
         candidates = within_distance(rows, origin, max_m)
 
-    picked = choose(candidates, last_id)
-    if picked is None:
-        return None, 0
-    restaurant, metres = picked
-    result = {
-        "restaurant": restaurant,
-        "distance": None if metres is None else format_distance(metres),
-        "unknown_distance": max_m is not None and metres is None,
-        "unknown_price": bool(levels) and restaurant.price_level is None,
-    }
-    return result, len(candidates)
+    results = [
+        {
+            "restaurant": restaurant,
+            "distance": None if metres is None else format_distance(metres),
+            "unknown_distance": max_m is not None and metres is None,
+            "unknown_price": bool(levels) and restaurant.price_level is None,
+        }
+        for restaurant, metres in choose_many(candidates, pick_count, last_ids)
+    ]
+    return results, len(candidates)
 
 
 def back_to_list(restaurant_id=None):
@@ -359,10 +369,14 @@ def pick():
     distance = request.args.get("distance", "")
     prices = request.args.getlist("price")
     drawn = request.args.get("draw") == "1"
-    result, count, error = None, 0, None
+    count_raw = request.args.get("count", "")
+    pick_count = COUNT_CHOICES.get(count_raw, 1)
+    results, count, error = [], 0, None
 
     if drawn:
         max_m, levels, error = parse_pick_filters(distance, prices)
+        if error is None and count_raw and count_raw not in COUNT_CHOICES:
+            error = "抽取數量不正確"
         origin = None
         if error is None and max_m is not None:
             location = get_user_location()
@@ -371,8 +385,10 @@ def pick():
             else:
                 origin = (location.latitude, location.longitude)
         if error is None:
-            last_id = request.args.get("last", type=int)
-            result, count = draw(scope, me, max_m, levels, origin, last_id)
+            last_ids = request.args.getlist("last", type=int)
+            results, count = draw(
+                scope, me, max_m, levels, origin, last_ids, pick_count
+            )
 
     return render_template(
         "restaurant_pick.html",
@@ -381,9 +397,11 @@ def pick():
         prices=prices,
         drawn=drawn,
         error=error,
-        result=result,
+        results=results,
         count=count,
-        stats=rating_stats([result["restaurant"].id]) if result else {},
+        pick_count=pick_count,
+        count_options=range(1, MAX_PICK_COUNT + 1),
+        stats=rating_stats([item["restaurant"].id for item in results]),
         scope_labels=SCOPE_LABELS,
         distance_options=DISTANCE_OPTIONS,
     )
