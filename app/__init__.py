@@ -3,6 +3,7 @@ import secrets
 from pathlib import Path
 
 
+import sqlalchemy as sa
 from flask import Flask, flash, redirect, url_for
 from flask_wtf.csrf import CSRFError, CSRFProtect
 from werkzeug.exceptions import RequestEntityTooLarge
@@ -32,6 +33,33 @@ def load_secret_key(instance_path):
     key = secrets.token_hex(32)
     key_file.write_text(key)
     return key
+
+
+def add_missing_columns():
+    """Add columns that were added to the models after the database was created.
+
+    create_all() only creates missing tables, so an older app.db would otherwise
+    fail with "no such column". Only nullable columns can be added this way.
+    """
+    inspector = sa.inspect(db.engine)
+    with db.engine.begin() as conn:
+        for table in db.metadata.sorted_tables:
+            existing = {column["name"] for column in inspector.get_columns(table.name)}
+            for column in table.columns:
+                if column.name in existing:
+                    continue
+                if not column.nullable:
+                    raise RuntimeError(
+                        f"資料庫的 {table.name} 表缺少必填欄位 {column.name}，"
+                        "請刪除 instance/app.db 後重新啟動"
+                    )
+                column_type = column.type.compile(dialect=db.engine.dialect)
+                conn.execute(
+                    sa.text(
+                        f'ALTER TABLE "{table.name}" '
+                        f'ADD COLUMN "{column.name}" {column_type}'
+                    )
+                )
 
 
 def create_app(test_config=None):
@@ -70,5 +98,6 @@ def create_app(test_config=None):
 
     with app.app_context():
         db.create_all()
+        add_missing_columns()
 
     return app
