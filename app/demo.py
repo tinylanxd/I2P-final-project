@@ -192,14 +192,19 @@ RESTAURANTS = [
 ]
 
 
-@click.command("seed-demo")
-@with_appcontext
-def seed_demo():
-    """Add demo accounts and sample restaurants near 清大 (only once)."""
-    usernames = [data["username"] for data in USERS]
-    if db.session.scalar(db.select(User.id).where(User.username.in_(usernames))):
-        click.echo("範例資料已經存在，沒有變更")
-        return
+USERNAMES = [data["username"] for data in USERS]
+ADDED_MESSAGE = f"已加入範例資料：帳號 {'、'.join(USERNAMES)}，密碼都是 {DEMO_PASSWORD}"
+EXISTS_MESSAGE = "範例資料已經存在，沒有變更"
+
+
+def add_demo_data():
+    """Add the demo accounts and restaurants. Needs an app context.
+
+    Returns True when the data was added, False when a demo account already
+    exists (then nothing changes).
+    """
+    if db.session.scalar(db.select(User.id).where(User.username.in_(USERNAMES))):
+        return False
 
     users = {}
     for data in USERS:
@@ -230,5 +235,11 @@ def seed_demo():
             )
         )
     db.session.commit()
-    names = "、".join(usernames)
-    click.echo(f"已加入範例資料：帳號 {names}，密碼都是 {DEMO_PASSWORD}")
+    return True
+
+
+@click.command("seed-demo")
+@with_appcontext
+def seed_demo():
+    """Add demo accounts and sample restaurants near 清大 (only once)."""
+    click.echo(ADDED_MESSAGE if add_demo_data() else EXISTS_MESSAGE)

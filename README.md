@@ -31,6 +31,8 @@ python -m venv .venv
 
 macOS / Linux：把 `python` 換成 `python3`，把 `.venv\Scripts\python` 換成 `.venv/bin/python`（下面的指令也一樣）。
 
+之後 pull 下來的程式如果改了 `requirements.txt`（例如新增套件），請再執行一次上面最後一行，安裝新的套件。
+
 ## 執行
 
 ```
@@ -45,7 +47,7 @@ macOS / Linux：把 `python` 換成 `python3`，把 `.venv\Scripts\python` 換�
 .venv\Scripts\python -m flask --app run run --debug
 ```
 
-瀏覽器定位功能只能在 `127.0.0.1`、`localhost` 或 HTTPS 網站上使用。用手機連電腦的 IP 開網站時，無法取得位置。
+瀏覽器定位功能只能在 `127.0.0.1`、`localhost` 或 HTTPS 網站上使用。用手機連電腦的 IP 開網站時，無法取得位置。要用手機或其他電腦展示，請看下面的「用手機或其他電腦展示」。
 
 ## 範例資料（展示用）
 
@@ -67,6 +69,36 @@ macOS / Linux：把 `python` 換成 `python3`，把 `.venv\Scripts\python` 換�
 - 範例資料會加進 `instance/app.db`，原本的帳號和餐廳都會保留。
 - 如果顯示「範例資料已經存在，沒有變更」，代表資料庫裡已經有 `demo` 或 `foodie` 帳號，這次不會加入任何資料。重複執行時也一樣，不會重複加入。
 - 想清除範例資料或重新加入，刪除 `instance/app.db` 再重新啟動即可。其他帳號和餐廳也會一起消失。
+
+## 用手機或其他電腦展示
+
+手機或其他電腦用 `http://電腦的IP:5000` 開網站時，瀏覽器會封鎖定位。`share.py` 會一次啟動展示用的網站和 Cloudflare 的臨時通道（Quick Tunnel），拿到一個 HTTPS 網址，定位就能使用。不需要 Cloudflare 帳號，也不用改防火牆；手機用 Wi-Fi 或行動網路都連得到。
+
+第一次使用前，先安裝 cloudflared（macOS 用 `brew install cloudflared`）：
+
+```
+winget install Cloudflare.cloudflared
+```
+
+**啟動**：在檔案總管雙擊 `share.bat`，或執行：
+
+```
+.venv\Scripts\python share.py
+```
+
+等幾秒到一分鐘，視窗會顯示 HTTPS 網址和 QR code，用手機掃描或打開網址即可，範例帳號是 `demo`／`demo`。按「🎲 抽一間」並選了距離時，瀏覽器會詢問位置權限，選「允許」。
+
+**關閉**：在同一個視窗按 `Enter` 或 `Ctrl+C`，網站和通道會一起關掉。如果視窗卡住，或關掉視窗後網址還打得開，雙擊 `stop_share.bat`（或執行 `.venv\Scripts\python share.py stop`）強制關閉。
+
+注意：
+
+- 展示用另一份資料庫 `instance/demo.db`，第一次啟動時會自動加入範例資料。平常的 `instance/app.db` 不會被用到，也不會公開。想讓展示資料重新開始，先關閉展示，再刪除 `instance/demo.db`。
+- 展示用的網站跑在 port 5050，可以和平常開發用的網站（port 5000）同時開著。
+- 通道開著時，任何拿到網址的人都能連進來，展示完請立刻關掉。
+- 每次啟動的網址都不一樣，要重新傳給大家。
+- iPhone 要先在「設定 → 隱私權與安全性 → 定位服務 → Safari 網站」選「使用 App 期間」；Android 要開手機的定位。
+- 開不了通道時，cloudflared 的完整紀錄在 `instance/share-cloudflared.log`。如果紀錄說不支援 quick tunnel，可能是使用者資料夾裡有 `.cloudflared\config.yaml`，先暫時把它改名再試。
+- `share.bat` 和 `stop_share.bat` 只能在 Windows 使用。macOS / Linux 請執行 `.venv/bin/python share.py`，關閉用 `.venv/bin/python share.py stop`。
 
 ## 測試
 
