@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import summary %}
+{% block title %}首頁{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="home-head">
+    <h1>今天吃什麼？</h1>
+    {% if restaurants %}
+    <a class="button secondary" href="{{ url_for('main.home') }}">🔄 換一批</a>
+    {% endif %}
+  </div>
+
+  {# No action buttons here: they redirect back, and reloading this page draws a new set. #}
+  {% for r in restaurants %}
+  <article class="item">
+    {{ summary(r, me, stats.get(r.id), '我的餐廳' if r.user_id == me else '公用餐廳') }}
+  </article>
+  {% else %}
+  <p class="empty">還沒有可以推薦的餐廳。按上方「＋ 新增餐廳」，或到「公用餐廳」看看</p>
+  {% endfor %}
+</div>
+{% endblock %}

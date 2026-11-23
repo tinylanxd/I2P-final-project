@@ -1,4 +1,4 @@
-"""Distance and drawing helpers for the random pick page (no Flask here)."""
+"""Distance and drawing helpers for the random pick and home pages (no Flask here)."""
 
 import math
 import random
@@ -49,3 +49,15 @@ def choose(candidates, last_id=None):
         others = [c for c in candidates if c[0].id != last_id]
         candidates = others or candidates
     return random.choice(candidates) if candidates else None
+
+
+def weighted_sample(items, weight, k):
+    """Up to k distinct items, picked one at a time. Each pick chooses among
+    the items not picked yet, in proportion to weight(item)."""
+    pool = list(items)
+    picked = []
+    while pool and len(picked) < k:
+        chosen = random.choices(pool, weights=[weight(item) for item in pool])[0]
+        pool.remove(chosen)
+        picked.append(chosen)
+    return picked

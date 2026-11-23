@@ -154,6 +154,16 @@ button {
   margin-bottom: 16px;
 }
 
+/* Home page: the heading and the 換一批 button on one line. */
+.home-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
 .search input[name="q"] {
   flex: 1;
   min-width: 0;

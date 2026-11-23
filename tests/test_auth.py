@@ -75,14 +75,14 @@ class AuthTestCase(unittest.TestCase):
     def test_any_nonblank_password_is_accepted(self):
         self.post("/register", password="1")
 
-        self.assertEqual(self.post("/login", password="1").request.path, "/restaurants/")
+        self.assertEqual(self.post("/login", password="1").request.path, "/home")
 
-    def test_login_leads_to_my_restaurants(self):
+    def test_login_leads_to_home(self):
         self.post("/register")
         response = self.post("/login")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.request.path, "/restaurants/")
+        self.assertEqual(response.request.path, "/home")
 
     def test_login_failures_show_the_same_error(self):
         self.post("/register")
@@ -137,7 +137,7 @@ class AuthTestCase(unittest.TestCase):
         self.post("/login")
 
         self.assertEqual(
-            self.client.get("/", follow_redirects=True).request.path, "/restaurants/"
+            self.client.get("/", follow_redirects=True).request.path, "/home"
         )
 
 

@@ -6,6 +6,7 @@ from app import create_app
 NAV = 'class="site-nav"'
 # Everything the shared button bar links to. The pick link may carry ?scope=...
 NAV_LINKS = [
+    'href="/home"',
     'href="/restaurants/?scope=mine"',
     'href="/restaurants/?scope=public"',
     'href="/restaurants/?scope=favorites"',
@@ -15,6 +16,7 @@ NAV_LINKS = [
     'action="/logout"',
 ]
 LOGGED_IN_PAGES = [
+    "/home",
     "/restaurants/",
     "/restaurants/?scope=public",
     "/restaurants/?scope=favorites",
@@ -58,11 +60,11 @@ class NavTestCase(unittest.TestCase):
         """Labels of the bar buttons marked as the current page."""
         return re.findall(r'aria-current="page">([^<]+)</a>', html)
 
-    def test_home_redirects_to_my_restaurants(self):
+    def test_home_shows_recommendations(self):
         response = self.alice.get("/home")
 
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.headers["Location"].endswith("/restaurants/"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("今天吃什麼？", response.get_data(as_text=True))
 
     def test_bar_is_on_every_logged_in_page(self):
         for path in LOGGED_IN_PAGES:
@@ -94,6 +96,7 @@ class NavTestCase(unittest.TestCase):
 
     def test_current_page_is_marked(self):
         for path, expected in [
+            ("/home", ["首頁"]),
             ("/restaurants/", ["我的餐廳"]),
             ("/restaurants/?scope=public", ["公用餐廳"]),
             ("/restaurants/?scope=favorites", ["♥ 我的收藏"]),

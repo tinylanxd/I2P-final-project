@@ -1,4 +1,4 @@
-{# Shared pieces used by the list page and the detail page. #}
+{# Shared pieces used by the list, detail and home pages. #}
 
 {% macro stars(value) -%}
 {%- set n = (value + 0.5)|int -%}
@@ -25,6 +25,33 @@
 {%- elif r.address -%}
 <a href="https://www.google.com/maps/search/?api=1&amp;query={{ r.address|urlencode }}" target="_blank" rel="noopener noreferrer">🗺 在地圖開啟</a>
 {%- endif -%}
+{%- endmacro %}
+
+{# The body of a restaurant card on the list and home pages, without action buttons.
+   `label` is an optional source tag such as 我的餐廳. #}
+{% macro summary(r, me, stat, label='') -%}
+<div class="item-head">
+  <h2><a href="{{ url_for('restaurants.detail', restaurant_id=r.id) }}">{{ r.name }}</a></h2>
+  {% if r.category %}<span class="tag">{{ r.category }}</span>{% endif %}
+  {{ price_tag(r.price_level) }}
+  {% if r.user_id == me and r.is_public %}<span class="badge">已公開</span>{% endif %}
+  {% if label %}<span class="meta">{{ label }}</span>{% endif %}
+</div>
+<p>{{ rating(stat) }}</p>
+{% if r.menu_items %}
+<ul class="menu-preview">
+  {% for m in r.menu_items[:3] %}
+  <li>{{ m.name }}{% if m.price is not none %} <span class="price">NT$ {{ m.price }}</span>{% endif %}</li>
+  {% endfor %}
+  {% if r.menu_items|length > 3 %}
+  <li class="meta">…等共 {{ r.menu_items|length }} 項餐點</li>
+  {% endif %}
+</ul>
+{% endif %}
+{% if r.address %}<p>📍 {{ r.address }}</p>{% endif %}
+{% if r.note %}<p>{{ r.note }}</p>{% endif %}
+{% if r.address or r.latitude is not none %}<p>{{ map_link(r) }}</p>{% endif %}
+{% if r.user_id != me %}<p class="meta">分享者：{{ r.owner.username }}</p>{% endif %}
 {%- endmacro %}
 
 {% macro hidden(scope, return_to) -%}

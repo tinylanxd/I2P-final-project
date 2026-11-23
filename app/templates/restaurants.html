@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import rating, map_link, actions, price_tag %}
+{% from "_macros.html" import summary, actions %}
 {% block title %}{{ {'mine': '我的餐廳', 'public': '公用餐廳', 'favorites': '我的收藏'}[scope] }}{% endblock %}
 {% block content %}
 <div class="page">
@@ -11,28 +11,7 @@
 
   {% for r in restaurants %}
   <article class="item">
-    <div class="item-head">
-      <h2><a href="{{ url_for('restaurants.detail', restaurant_id=r.id) }}">{{ r.name }}</a></h2>
-      {% if r.category %}<span class="tag">{{ r.category }}</span>{% endif %}
-      {{ price_tag(r.price_level) }}
-      {% if r.user_id == me and r.is_public %}<span class="badge">已公開</span>{% endif %}
-    </div>
-    <p>{{ rating(stats.get(r.id)) }}</p>
-    {% if r.menu_items %}
-    <ul class="menu-preview">
-      {% for m in r.menu_items[:3] %}
-      <li>{{ m.name }}{% if m.price is not none %} <span class="price">NT$ {{ m.price }}</span>{% endif %}</li>
-      {% endfor %}
-      {% if r.menu_items|length > 3 %}
-      <li class="meta">…等共 {{ r.menu_items|length }} 項餐點</li>
-      {% endif %}
-    </ul>
-    {% endif %}
-    {% if r.address %}<p>📍 {{ r.address }}</p>{% endif %}
-    {% if r.note %}<p>{{ r.note }}</p>{% endif %}
-    {% if r.address or r.latitude is not none %}<p>{{ map_link(r) }}</p>{% endif %}
-    {% if r.user_id != me %}<p class="meta">分享者：{{ r.owner.username }}</p>{% endif %}
-
+    {{ summary(r, me, stats.get(r.id)) }}
     {{ actions(r, me, scope, fav_ids, saved_ids) }}
   </article>
   {% else %}

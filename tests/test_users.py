@@ -167,7 +167,7 @@ class UsernameTests(UsersTestCase):
 
         self.logout()
         self.assertEqual(self.login("alice").request.path, "/login")
-        self.assertEqual(self.login("alice2").request.path, "/restaurants/")
+        self.assertEqual(self.login("alice2").request.path, "/home")
 
     def test_keeping_same_username_is_fine(self):
         response = self.post("/settings/username", username="alice")
@@ -200,7 +200,7 @@ class PasswordTests(UsersTestCase):
 
         self.logout()
         self.assertEqual(self.login(password="pw").request.path, "/login")
-        self.assertEqual(self.login(password="new").request.path, "/restaurants/")
+        self.assertEqual(self.login(password="new").request.path, "/home")
 
     def test_invalid_passwords_are_rejected(self):
         for password, confirm, message in [
@@ -214,7 +214,7 @@ class PasswordTests(UsersTestCase):
                 self.assertIn(message, response.get_data(as_text=True))
 
         self.logout()
-        self.assertEqual(self.login(password="pw").request.path, "/restaurants/")
+        self.assertEqual(self.login(password="pw").request.path, "/home")
 
 
 class AvatarTests(UsersTestCase):

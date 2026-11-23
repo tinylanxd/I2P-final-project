@@ -10,6 +10,7 @@
 
 <header class="site-nav">
   <nav class="nav-main" aria-label="功能">
+    {{ nav_button('首頁', url_for('main.home'), here == 'main.home') }}
     {{ nav_button('我的餐廳', url_for('restaurants.index', scope='mine'), list_scope == 'mine') }}
     {{ nav_button('公用餐廳', url_for('restaurants.index', scope='public'), list_scope == 'public') }}
     {{ nav_button('♥ 我的收藏', url_for('restaurants.index', scope='favorites'), list_scope == 'favorites') }}
